@@ -1,21 +1,24 @@
 import { type ClassValue, clsx } from "clsx"
 import { twMerge } from "tailwind-merge"
 import { format, addMinutes, isAfter, startOfDay, addDays } from 'date-fns'
+import { Boss, RespawnData, ScheduleData } from "./boss";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
-export function calculateNextSpawn(boss: any, lastDeath?: Date) {
+export function calculateNextSpawn(boss: Boss, lastDeath?: Date) {
   const now = new Date()
   
   if (boss.spawn_type === 'respawn_timer' && lastDeath) {
-    const nextSpawn = addMinutes(lastDeath, boss.spawn_data.respawn_minutes)
+    const respawnData = boss.spawn_data as RespawnData
+    const nextSpawn = addMinutes(lastDeath, respawnData.respawn_minutes)
     return isAfter(nextSpawn, now) ? nextSpawn : null
   }
   
   if (boss.spawn_type === 'fixed_schedule') {
-    const schedule = boss.spawn_data.schedule
+    const scheduleData = boss.spawn_data as ScheduleData
+    const schedule = scheduleData.schedule
     let nextSpawn: Date | null = null
     
     // Check next 14 days for upcoming spawn

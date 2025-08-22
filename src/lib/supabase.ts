@@ -1,4 +1,5 @@
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
+import { SpawnData } from "./boss";
 
 // Simple client-side only setup to avoid server component issues
 export const createClient = () => createClientComponentClient()
@@ -12,7 +13,7 @@ export type Database = {
           name: string
           level: number
           spawn_type: 'fixed_schedule' | 'respawn_timer'
-          spawn_data: any
+          spawn_data: SpawnData
           created_at: string
         }
         Insert: {
@@ -20,7 +21,7 @@ export type Database = {
           name: string
           level: number
           spawn_type: 'fixed_schedule' | 'respawn_timer'
-          spawn_data: any
+          spawn_data: SpawnData
           created_at?: string
         }
         Update: {
@@ -28,7 +29,7 @@ export type Database = {
           name?: string
           level?: number
           spawn_type?: 'fixed_schedule' | 'respawn_timer'
-          spawn_data?: any
+          spawn_data?: SpawnData
           created_at?: string
         }
       }

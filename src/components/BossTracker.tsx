@@ -11,27 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import DeathTimeForm from './DeathTimeForm'
 import { Clock, Skull, Calendar } from 'lucide-react'
 import { format } from "date-fns";
-
-interface Boss {
-  id: number
-  name: string
-  level: number
-  spawn_type: 'fixed_schedule' | 'respawn_timer'
-  spawn_data: any
-}
-
-interface BossDeath {
-  id: number
-  boss_id: number
-  death_time: string
-  user_id: string | null
-}
-
-interface BossTrackerProps {
-  bosses: Boss[]
-  deaths: BossDeath[]
-  isAuthenticated: boolean
-}
+import { Boss, BossDeath, BossTrackerProps } from '@/lib/boss'
 
 export default function BossTracker({ bosses, deaths, isAuthenticated }: BossTrackerProps) {
   const [currentTime, setCurrentTime] = useState(new Date())

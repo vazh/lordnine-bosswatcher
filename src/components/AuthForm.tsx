@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { AuthError } from '@supabase/supabase-js'
 
 export default function AuthForm() {
   const [email, setEmail] = useState('')
@@ -35,8 +36,12 @@ export default function AuthForm() {
         if (error) throw error
         window.location.href = '/'
       }
-    } catch (error: any) {
-      alert(error.message)
+    } catch (error: unknown) {
+      if (error instanceof AuthError) {
+        alert(error.message)
+      } else {
+        alert('An unexpected error occurred. Please try again.')
+      }
     } finally {
       setIsLoading(false)
     }

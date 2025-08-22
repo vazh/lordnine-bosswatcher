@@ -1,14 +1,19 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { createClient } from '@/lib/supabase'
+import { createClient, Database } from '@/lib/supabase'
+import { Session } from '@supabase/supabase-js'
 import BossTracker from '@/components/BossTracker'
 import AuthButton from '@/components/AuthButton'
 
 export default function Home() {
-  const [session, setSession] = useState<any>(null)
-  const [bosses, setBosses] = useState<any[]>([])
-  const [deaths, setDeaths] = useState<any[]>([])
+
+  type Boss = Database["public"]["Tables"]["bosses"]["Row"]
+  type Death = Database["public"]["Tables"]["boss_deaths"]["Row"]
+
+  const [session, setSession] = useState<Session | null>(null)
+  const [bosses, setBosses] = useState<Boss[]>([])
+  const [deaths, setDeaths] = useState<Death[]>([])
   const [loading, setLoading] = useState(true)
   
   const supabase = createClient()
