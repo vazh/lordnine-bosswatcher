@@ -1,7 +1,7 @@
 import { type ClassValue, clsx } from "clsx"
 import { twMerge } from "tailwind-merge"
 import { format, addMinutes, isAfter, startOfDay, addDays } from 'date-fns'
-import { Boss, RespawnData, ScheduleData } from "./boss";
+import { Boss, RespawnData, ScheduleData, ScheduleEntry } from "./boss";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -25,9 +25,9 @@ export function calculateNextSpawn(boss: Boss, lastDeath?: Date) {
     for (let i = 0; i < 14; i++) {
       const checkDate = addDays(startOfDay(now), i)
       const dayOfWeek = checkDate.getDay()
-      
-      const todaySpawns = schedule.filter((s: any) => s.day === dayOfWeek)
-      
+
+      const todaySpawns = schedule.filter((s: ScheduleEntry) => s.day === dayOfWeek)
+
       for (const spawn of todaySpawns) {
         const spawnTime = new Date(checkDate)
         spawnTime.setHours(spawn.hour, spawn.minute, 0, 0)
