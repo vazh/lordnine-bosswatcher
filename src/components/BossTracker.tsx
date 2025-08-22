@@ -8,8 +8,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+import DeathTimeForm from './DeathTimeForm'
 import { Clock, Skull, Calendar } from 'lucide-react'
-import DeathTimeForm from "./DeathTimeForm";
+import { format } from "date-fns";
 
 interface Boss {
   id: number
@@ -109,7 +110,7 @@ export default function BossTracker({ bosses, deaths, isAuthenticated }: BossTra
                       {lastDeath ? (
                         <div className="flex items-center gap-1">
                           <Skull className="h-4 w-4 text-red-400" />
-                          {lastDeath.toLocaleString()}
+                          {format(lastDeath, "dd-MM-yyyy HH:mm")}
                         </div>
                       ) : (
                         <span className="text-slate-500">Not recorded</span>
@@ -119,7 +120,7 @@ export default function BossTracker({ bosses, deaths, isAuthenticated }: BossTra
                       {nextSpawn ? (
                         <div className="flex items-center gap-1">
                           <Calendar className="h-4 w-4 text-blue-400" />
-                          {nextSpawn.toLocaleString()}
+                          {format(nextSpawn, "dd-MM-yyyy HH:mm")}
                         </div>
                       ) : (
                         <span className="text-slate-500">

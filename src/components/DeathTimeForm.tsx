@@ -20,9 +20,22 @@ interface DeathTimeFormProps {
 export default function DeathTimeForm({ boss, onSuccess }: DeathTimeFormProps) {
   const [isLoading, setIsLoading] = useState(false)
   const [deathTime, setDeathTime] = useState(() => {
-    const now = new Date()
-    now.setSeconds(0, 0) // Round to nearest minute
-    return now.toISOString().slice(0, 16) // Format for datetime-local input
+    const now = new Date();
+
+    // If there are any seconds or milliseconds, bump to the next minute
+    if (now.getSeconds() > 0 || now.getMilliseconds() > 0) {
+      now.setMinutes(now.getMinutes() + 1);
+    }
+
+    now.setSeconds(0, 0);
+
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, "0");
+    const day = String(now.getDate()).padStart(2, "0");
+    const hours = String(now.getHours()).padStart(2, "0");
+    const minutes = String(now.getMinutes()).padStart(2, "0");
+
+    return `${year}-${month}-${day}T${hours}:${minutes}`;
   })
 
   const supabase = createClient()
@@ -33,7 +46,7 @@ export default function DeathTimeForm({ boss, onSuccess }: DeathTimeFormProps) {
 
     try {
       const { data: { user } } = await supabase.auth.getUser()
-      
+
       if (!user) {
         throw new Error('Not authenticated')
       }
@@ -72,7 +85,7 @@ export default function DeathTimeForm({ boss, onSuccess }: DeathTimeFormProps) {
           required
         />
       </div>
-      
+
       <div className="flex justify-end gap-2">
         <Button
           type="submit"
