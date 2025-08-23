@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase'
 import { calculateNextSpawn, formatTimeUntilSpawn } from '@/lib/utils'
-import { Paper, Typography } from '@mui/material'
+import { Paper, Typography, Box } from '@mui/material'
 import { DataGrid, GridColDef, GridRenderCellParams } from '@mui/x-data-grid'
 import DeathTimeModal from './DeathTimeModal'
 import { LocalHospital as Skull, Schedule } from '@mui/icons-material'
@@ -71,54 +71,75 @@ export default function BossTracker({ bosses, deaths, isAuthenticated }: BossTra
 
   // Define columns
   const baseColumns: GridColDef[] = [
-    {
-      field: 'level',
-      headerName: 'Level',
-      width: 100,
-      type: 'number',
-      align: 'center',
-      headerAlign: 'center',
-    },
-    {
-      field: 'name',
-      headerName: 'Boss Name',
-      width: 200,
-      flex: 1,
-      renderCell: (params: GridRenderCellParams) => (
+  {
+    field: 'level',
+    headerName: 'Level',
+    width: 100,
+    type: 'number',
+    align: 'center',
+    headerAlign: 'center',
+  },
+  {
+    field: 'name',
+    headerName: 'Boss Name',
+    width: 100,
+    flex: 1,
+    renderCell: (params: GridRenderCellParams) => (
+      <Box
+        display="flex"
+        alignItems="center" // vertical center
+        height="100%"       // make it fill the cell
+      >
         <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
           {params.value}
         </Typography>
-      ),
-    },
-    {
-      field: 'lastDeath',
-      headerName: 'Last Death',
-      width: 200,
-      flex: 1,
-      renderCell: (params: GridRenderCellParams) => (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          {params.value !== 'Not recorded' && <Skull sx={{ color: 'error.main', fontSize: 18 }} />}
-          <Typography variant="body2" color={params.value === 'Not recorded' ? 'text.secondary' : 'text.primary'}>
-            {params.value}
-          </Typography>
-        </div>
-      ),
-    },
-    {
-      field: 'nextSpawnStatus',
-      headerName: 'Next Spawn (Status)',
-      width: 250,
-      flex: 1,
-      renderCell: (params: GridRenderCellParams) => (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <Schedule sx={{ color: 'info.main', fontSize: 18 }} />
-          <Typography variant="body2">
-            {params.value}
-          </Typography>
-        </div>
-      ),
-    },
-  ]
+      </Box>
+    ),
+  },
+  {
+    field: 'lastDeath',
+    headerName: 'Last Death',
+    width: 100,
+    flex: 1,
+    renderCell: (params: GridRenderCellParams) => (
+      <Box
+        display="flex"
+        alignItems="center"
+        gap={1}
+        height="100%"
+      >
+        {params.value !== 'Not recorded' && (
+          <Skull sx={{ color: 'error.main', fontSize: 18 }} />
+        )}
+        <Typography
+          variant="body2"
+          color={params.value === 'Not recorded' ? 'text.secondary' : 'text.primary'}
+        >
+          {params.value}
+        </Typography>
+      </Box>
+    ),
+  },
+  {
+    field: 'nextSpawnStatus',
+    headerName: 'Next Spawn (Status)',
+    width: 250,
+    flex: 1,
+    renderCell: (params: GridRenderCellParams) => (
+      <Box
+        display="flex"
+        alignItems="center"
+        gap={1}
+        height="100%"
+      >
+        <Schedule sx={{ color: 'info.main', fontSize: 18 }} />
+        <Typography variant="body2">
+          {params.value}
+        </Typography>
+      </Box>
+    ),
+  },
+];
 
   // Add action column only if authenticated
   const columns = isAuthenticated ? [
@@ -163,9 +184,6 @@ export default function BossTracker({ bosses, deaths, isAuthenticated }: BossTra
   return (
     <>
       <Paper elevation={3} sx={{ p: 3 }}>
-        <Typography variant="h5" gutterBottom sx={{ mb: 3, color: 'primary.main', fontWeight: 'bold' }}>
-          Boss Spawn Status
-        </Typography>
 
         <div style={{ height: '100%', width: '100%' }}>
           <DataGrid
