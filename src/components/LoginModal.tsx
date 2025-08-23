@@ -2,17 +2,18 @@
 
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase'
-import { 
-  Dialog, 
-  DialogTitle, 
-  DialogContent, 
-  DialogActions, 
-  Button, 
-  TextField, 
-  Box, 
+import {
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button,
+  TextField,
+  Box,
   Typography,
   Alert
 } from '@mui/material'
+import { AuthError } from '@supabase/supabase-js'
 
 interface LoginModalProps {
   open: boolean
@@ -51,8 +52,11 @@ export default function LoginModal({ open, onClose }: LoginModalProps) {
         if (error) throw error
         // Modal will close automatically via useEffect in parent component
       }
-    } catch (error: any) {
-      setError(error.message)
+    } catch (error: unknown) {
+      if (error instanceof AuthError) {
+        setError(error.message)
+      }
+
     } finally {
       setIsLoading(false)
     }
@@ -77,7 +81,7 @@ export default function LoginModal({ open, onClose }: LoginModalProps) {
           Boss Tracker
         </Typography>
       </DialogTitle>
-      
+
       <form onSubmit={handleAuth}>
         <DialogContent>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 1 }}>
@@ -87,7 +91,7 @@ export default function LoginModal({ open, onClose }: LoginModalProps) {
             {message && (
               <Alert severity="success">{message}</Alert>
             )}
-            
+
             <TextField
               fullWidth
               label="Email"
@@ -97,7 +101,7 @@ export default function LoginModal({ open, onClose }: LoginModalProps) {
               required
               variant="outlined"
             />
-            
+
             <TextField
               fullWidth
               label="Password"
@@ -109,14 +113,14 @@ export default function LoginModal({ open, onClose }: LoginModalProps) {
             />
           </Box>
         </DialogContent>
-        
+
         <DialogActions sx={{ flexDirection: 'column', gap: 1, p: 3 }}>
           <Button
             type="submit"
             fullWidth
             variant="contained"
             disabled={isLoading}
-            sx={{ 
+            sx={{
               py: 1.5,
               background: 'linear-gradient(45deg, #7c3aed 30%, #a855f7 90%)',
               '&:hover': {
@@ -126,14 +130,14 @@ export default function LoginModal({ open, onClose }: LoginModalProps) {
           >
             {isLoading ? 'Loading...' : (isSignUp ? 'Sign Up' : 'Sign In')}
           </Button>
-          
+
           <Button
             onClick={() => setIsSignUp(!isSignUp)}
             sx={{ color: 'primary.main' }}
           >
             {isSignUp ? 'Already have an account? Sign In' : "Don't have an account? Sign Up"}
           </Button>
-          
+
           <Button onClick={handleClose} color="inherit">
             Cancel
           </Button>
