@@ -3,21 +3,18 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase'
 import { calculateNextSpawn, formatTimeUntilSpawn } from '@/lib/utils'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
-import DeathTimeForm from './DeathTimeForm'
-import { Clock, Skull, Calendar } from 'lucide-react'
+import { Paper, Typography } from '@mui/material'
+import { DataGrid, GridColDef, GridRenderCellParams } from '@mui/x-data-grid'
+import DeathTimeModal from './DeathTimeModal'
+import { LocalHospital as Skull, Schedule } from '@mui/icons-material'
 import { format } from "date-fns";
 import { Boss, BossDeath, BossTrackerProps } from '@/lib/boss'
 
 export default function BossTracker({ bosses, deaths, isAuthenticated }: BossTrackerProps) {
   const [currentTime, setCurrentTime] = useState(new Date())
   const [selectedBoss, setSelectedBoss] = useState<Boss | null>(null)
-  const [isDialogOpen, setIsDialogOpen] = useState(false)
-  
+  const [isModalOpen, setIsModalOpen] = useState(false)
+
   // Update time every minute
   useEffect(() => {
     const interval = setInterval(() => {
@@ -34,130 +31,165 @@ export default function BossTracker({ bosses, deaths, isAuthenticated }: BossTra
   const getBossStatus = (boss: Boss) => {
     const lastDeath = getLastDeath(boss.id)
     const nextSpawn = calculateNextSpawn(boss, lastDeath)
-    
+
     if (!nextSpawn) {
       if (boss.spawn_type === 'respawn_timer' && !lastDeath) {
-        return { status: 'unknown', text: 'No death recorded', variant: 'secondary' as const }
+        return { status: 'Unknown', nextSpawn: null }
       }
-      return { status: 'available', text: 'Available', variant: 'default' as const }
+      return { status: 'Available', nextSpawn: null }
     }
-    
+
     const timeUntil = formatTimeUntilSpawn(nextSpawn)
     if (timeUntil === 'Available now') {
-      return { status: 'available', text: 'Available', variant: 'default' as const }
+      return { status: 'Available', nextSpawn }
     }
-    
-    return { status: 'waiting', text: timeUntil, variant: 'destructive' as const }
+
+    return { status: timeUntil, nextSpawn }
   }
 
   const handleDeathRecorded = () => {
-    setIsDialogOpen(false)
-    window.location.reload() // Simple refresh - in production, use proper state management
+    setIsModalOpen(false)
+    window.location.reload() // Simple refresh
   }
 
+  // Prepare data for DataGrid
+  const rows = bosses.map(boss => {
+    const lastDeath = getLastDeath(boss.id)
+    const statusInfo = getBossStatus(boss)
+
+    return {
+      id: boss.id,
+      level: boss.level,
+      name: boss.name,
+      lastDeath: lastDeath ? format(lastDeath, "dd-MM-yyyy HH:mm") : 'Not recorded',
+      nextSpawnStatus: statusInfo.nextSpawn
+        ? `${format(statusInfo.nextSpawn, "dd-MM-yyyy HH:mm")} (${statusInfo.status})`
+        : statusInfo.status,
+      boss: boss // Keep full boss object for actions
+    }
+  })
+
+  // Define columns
+  const baseColumns: GridColDef[] = [
+    {
+      field: 'level',
+      headerName: 'Level',
+      width: 100,
+      type: 'number',
+      align: 'center',
+      headerAlign: 'center',
+    },
+    {
+      field: 'name',
+      headerName: 'Boss Name',
+      width: 200,
+      flex: 1,
+      renderCell: (params: GridRenderCellParams) => (
+        <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
+          {params.value}
+        </Typography>
+      ),
+    },
+    {
+      field: 'lastDeath',
+      headerName: 'Last Death',
+      width: 200,
+      flex: 1,
+      renderCell: (params: GridRenderCellParams) => (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          {params.value !== 'Not recorded' && <Skull sx={{ color: 'error.main', fontSize: 18 }} />}
+          <Typography variant="body2" color={params.value === 'Not recorded' ? 'text.secondary' : 'text.primary'}>
+            {params.value}
+          </Typography>
+        </div>
+      ),
+    },
+    {
+      field: 'nextSpawnStatus',
+      headerName: 'Next Spawn (Status)',
+      width: 250,
+      flex: 1,
+      renderCell: (params: GridRenderCellParams) => (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <Schedule sx={{ color: 'info.main', fontSize: 18 }} />
+          <Typography variant="body2">
+            {params.value}
+          </Typography>
+        </div>
+      ),
+    },
+  ]
+
+  // Add action column only if authenticated
+  const columns = isAuthenticated ? [
+    ...baseColumns,
+    {
+      field: 'actions',
+      headerName: 'Actions',
+      width: 150,
+      sortable: false,
+      renderCell: (params: GridRenderCellParams) => (
+        <button
+          onClick={() => {
+            setSelectedBoss(params.row.boss)
+            setIsModalOpen(true)
+          }}
+          style={{
+            background: 'linear-gradient(45deg, #7c3aed 30%, #a855f7 90%)',
+            border: 'none',
+            borderRadius: '8px',
+            color: 'white',
+            padding: '8px 16px',
+            cursor: 'pointer',
+            fontSize: '14px',
+            fontWeight: '500',
+            transition: 'all 0.3s ease',
+          }}
+          onMouseOver={(e) => {
+            e.currentTarget.style.transform = 'scale(1.05)'
+            e.currentTarget.style.boxShadow = '0 4px 12px rgba(124, 58, 237, 0.4)'
+          }}
+          onMouseOut={(e) => {
+            e.currentTarget.style.transform = 'scale(1)'
+            e.currentTarget.style.boxShadow = 'none'
+          }}
+        >
+          Record Death
+        </button>
+      ),
+    },
+  ] : baseColumns
+
   return (
-    <div className="space-y-6">
-      <Card className="bg-slate-800 border-slate-700">
-        <CardHeader>
-          <CardTitle className="text-white flex items-center gap-2">
-            <Clock className="h-5 w-5" />
-            Boss Spawn Status
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow className="border-slate-700">
-                <TableHead className="text-slate-300">Level</TableHead>
-                <TableHead className="text-slate-300">Boss Name</TableHead>
-                <TableHead className="text-slate-300">Last Death</TableHead>
-                <TableHead className="text-slate-300">Next Spawn</TableHead>
-                <TableHead className="text-slate-300">Status</TableHead>
-                <TableHead className="text-slate-300">Action</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {bosses.map(boss => {
-                const lastDeath = getLastDeath(boss.id)
-                const nextSpawn = calculateNextSpawn(boss, lastDeath)
-                const status = getBossStatus(boss)
-                
-                return (
-                  <TableRow key={boss.id} className="border-slate-700 hover:bg-slate-700/50">
-                    <TableCell className="text-white font-medium">{boss.level}</TableCell>
-                    <TableCell className="text-white font-semibold">{boss.name}</TableCell>
-                    <TableCell className="text-slate-300">
-                      {lastDeath ? (
-                        <div className="flex items-center gap-1">
-                          <Skull className="h-4 w-4 text-red-400" />
-                          {format(lastDeath, "dd-MM-yyyy HH:mm")}
-                        </div>
-                      ) : (
-                        <span className="text-slate-500">Not recorded</span>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-slate-300">
-                      {nextSpawn ? (
-                        <div className="flex items-center gap-1">
-                          <Calendar className="h-4 w-4 text-blue-400" />
-                          {format(nextSpawn, "dd-MM-yyyy HH:mm")}
-                        </div>
-                      ) : (
-                        <span className="text-slate-500">
-                          {boss.spawn_type === 'fixed_schedule' ? 'Check schedule' : 'Unknown'}
-                        </span>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={status.variant} className="font-medium">
-                        {status.text}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      {isAuthenticated ? (
-                        <Dialog open={isDialogOpen && selectedBoss?.id === boss.id} onOpenChange={setIsDialogOpen}>
-                          <DialogTrigger asChild>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="border-slate-600 text-white hover:bg-slate-700"
-                              onClick={() => setSelectedBoss(boss)}
-                            >
-                              Record Death
-                            </Button>
-                          </DialogTrigger>
-                          <DialogContent className="bg-slate-800 border-slate-700">
-                            <DialogHeader>
-                              <DialogTitle className="text-white">
-                                Record Death: {selectedBoss?.name}
-                              </DialogTitle>
-                            </DialogHeader>
-                            {selectedBoss && (
-                              <DeathTimeForm 
-                                boss={selectedBoss} 
-                                onSuccess={handleDeathRecorded}
-                              />
-                            )}
-                          </DialogContent>
-                        </Dialog>
-                      ) : (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="border-slate-600 text-slate-400 cursor-not-allowed opacity-50"
-                          disabled
-                        >
-                          Sign In Required
-                        </Button>
-                      )}
-                    </TableCell>
-                  </TableRow>
-                )
-              })}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
-    </div>
+    <>
+      <Paper elevation={3} sx={{ p: 3 }}>
+        <Typography variant="h5" gutterBottom sx={{ mb: 3, color: 'primary.main', fontWeight: 'bold' }}>
+          Boss Spawn Status
+        </Typography>
+
+        <div style={{ height: '100%', width: '100%' }}>
+          <DataGrid
+            rows={rows}
+            columns={columns}
+            pageSizeOptions={[50]}
+            rowSelection={false}
+            sx={{
+              '& .MuiDataGrid-root': {
+                border: 'none',
+              },
+            }}
+          />
+        </div>
+      </Paper>
+
+      {selectedBoss && (
+        <DeathTimeModal
+          open={isModalOpen}
+          boss={selectedBoss}
+          onClose={() => setIsModalOpen(false)}
+          onSuccess={handleDeathRecorded}
+        />
+      )}
+    </>
   )
 }

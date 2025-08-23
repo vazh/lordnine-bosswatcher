@@ -1,24 +1,31 @@
 'use client'
 
 import { createClient } from '@/lib/supabase'
-import { Button } from '@/components/ui/button'
-import { LogOut } from 'lucide-react'
+import { Button } from '@mui/material'
+import { Logout } from '@mui/icons-material'
 
 export default function AuthButton() {
   const supabase = createClient()
 
   const handleSignOut = async () => {
     await supabase.auth.signOut()
-    window.location.href = '/login'
+    window.location.reload()
   }
 
   return (
     <Button
       onClick={handleSignOut}
-      variant="outline"
-      className="border-slate-600 text-white hover:bg-slate-700"
+      variant="outlined"
+      startIcon={<Logout />}
+      sx={{ 
+        borderColor: 'rgba(255, 255, 255, 0.3)',
+        color: 'white',
+        '&:hover': {
+          borderColor: 'rgba(255, 255, 255, 0.5)',
+          backgroundColor: 'rgba(255, 255, 255, 0.1)',
+        }
+      }}
     >
-      <LogOut className="h-4 w-4 mr-2" />
       Sign Out
     </Button>
   )

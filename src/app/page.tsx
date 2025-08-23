@@ -5,6 +5,9 @@ import { createClient, Database } from '@/lib/supabase'
 import { Session } from '@supabase/supabase-js'
 import BossTracker from '@/components/BossTracker'
 import AuthButton from '@/components/AuthButton'
+import LoginModal from '@/components/LoginModal'
+import { Container, Typography, Box, AppBar, Toolbar, IconButton } from '@mui/material'
+import { Login } from '@mui/icons-material'
 
 export default function Home() {
 
@@ -15,6 +18,7 @@ export default function Home() {
   const [bosses, setBosses] = useState<Boss[]>([])
   const [deaths, setDeaths] = useState<Death[]>([])
   const [loading, setLoading] = useState(true)
+  const [loginOpen, setLoginOpen] = useState(false)
   
   const supabase = createClient()
 
@@ -28,6 +32,7 @@ export default function Home() {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
         setSession(session)
+        if (session) setLoginOpen(false) // Close login modal on successful login
       }
     )
 
@@ -66,27 +71,45 @@ export default function Home() {
   }
 
   return (
-    <main className="container mx-auto px-4 py-8">
-      <div className="flex justify-between items-center mb-8">
-        <div>
-          <h1 className="text-4xl font-bold text-white mb-2">Lord Nine Boss Tracker</h1>
-          <p className="text-slate-300">Track boss spawn times and never miss a fight</p>
-        </div>
-        <div className="flex items-center gap-4">
+    <>
+      <AppBar position="static" sx={{ background: 'rgba(30, 41, 59, 0.9)', backdropFilter: 'blur(10px)' }}>
+        <Toolbar>
+          <Box sx={{ flexGrow: 1 }}>
+            <Typography variant="h4" component="h1" sx={{ fontWeight: 'bold', color: 'white' }}>
+              Lord Nine Boss Tracker
+            </Typography>
+            <Typography variant="subtitle1" sx={{ color: 'text.secondary' }}>
+              Track boss spawn times and never miss a fight
+            </Typography>
+          </Box>
+          
           {session ? (
-            <div className="flex items-center gap-4">
-              <span className="text-slate-300">Welcome, {session.user.email}</span>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+              <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                Welcome, {session.user.email}
+              </Typography>
               <AuthButton />
-            </div>
+            </Box>
           ) : (
-            <a href="/login" className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-md transition-colors">
-              Sign In to Record Deaths
-            </a>
+            <IconButton 
+              color="inherit" 
+              onClick={() => setLoginOpen(true)}
+              sx={{ 
+                opacity: 0.7,
+                '&:hover': { opacity: 1 }
+              }}
+            >
+              <Login />
+            </IconButton>
           )}
-        </div>
-      </div>
-      
-      <BossTracker bosses={bosses} deaths={deaths} isAuthenticated={!!session} />
-    </main>
+        </Toolbar>
+      </AppBar>
+
+      <Container maxWidth="lg" sx={{ py: 4 }}>
+        <BossTracker bosses={bosses} deaths={deaths} isAuthenticated={!!session} />
+      </Container>
+
+      <LoginModal open={loginOpen} onClose={() => setLoginOpen(false)} />
+    </>
   )
 }
